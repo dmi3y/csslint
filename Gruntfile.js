@@ -188,6 +188,11 @@ module.exports = function(grunt) {
                 src: [
                     "tests/**/*.js"
                 ]
+            },
+            nodeapi: {
+                src: [
+                    "tests/api/*.js"
+                ]
             }
         },
         test_rhino: {
