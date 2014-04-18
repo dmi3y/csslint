@@ -42,7 +42,7 @@ api = {
                 isTop = (lookupd === _lookupd),
                 gtg;
 
-            isFile = fs.statSync(filename).isFile;
+            isFile = (fs.existsSync(filename) && fs.statSync(filename).isFile);
             gtg = (!isFile && !isUserhome && !isTop);
             lookupd = _lookupd;
             return gtg;

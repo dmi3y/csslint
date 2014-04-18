@@ -16,7 +16,14 @@ function include(path, sandbox) {
         sandbox = {
             cli: function() {
                 //dummy cli to run from node.js api
-            }
+            },
+            require: function(req) {
+                if (req === "./lib/csslint-node") {
+                    return {CSSLint: null};
+                }
+                return require(req);
+            },
+            process: process
         },
         path = require("path"),
         cwdBackup = path.resolve(process.cwd());
@@ -36,7 +43,12 @@ function include(path, sandbox) {
 
         "look up file at the same directory": function() {
             var result = sandbox.api.lookUpFile(".rc0");
-            Assert.areEqual("c:\\work\\csslint\\tests\\api\\dir\\cwd\\.rc0", result);
+            Assert.areEqual(path.resolve(".rc0"), result);
+        },
+
+        "look up file from the upper directory": function() {
+            var result = sandbox.api.lookUpFile(".rc1");
+            Assert.areEqual(path.resolve("/../.rc1"), result);
         }
 
     }));
