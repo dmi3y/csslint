@@ -8,9 +8,11 @@
 
 var fs      = require("fs"),
     path    = require("path"),
-    CSSLint = require("./lib/csslint-node").CSSLint;
+    CSSLint = require("./lib/csslint-node").CSSLint,
+    userhome = path.resolve(process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE),
+    api;
 
-cli({
+api = {
     args: process.argv.slice(2),
 
     print: function(message){
@@ -27,6 +29,35 @@ cli({
         } catch (ex) {
             return false;
         }
+    },
+
+    lookUpFile: function(filename) {
+        var lookupd = process.cwd(),
+            isFile;
+
+        function isGoodToGoUp() {
+            var
+                isUserhome = (lookupd === userhome),
+                _lookupd = path.resolve(lookupd + "/../"),
+                isTop = (lookupd === _lookupd),
+                gtg;
+
+            isFile = fs.statSync(filename).isFile;
+            gtg = (!isFile && !isUserhome && !isTop);
+            lookupd = _lookupd;
+            return gtg;
+        }
+
+        (function traverseUp() {
+
+            filename = path.resolve(lookupd, filename);
+
+            if ( isGoodToGoUp() ) {
+                traverseUp();
+            }
+        }());
+
+        return isFile? filename: null;
     },
 
     getFiles: function(dir){
@@ -75,5 +106,6 @@ cli({
             return "";
         }
     }
-});
+};
 
+cli(api);

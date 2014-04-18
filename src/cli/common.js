@@ -294,7 +294,7 @@ function cli(api){
     }
 
     function readConfigFile(options) {
-        var data = api.readFile(api.getFullPath(".csslintrc")),
+        var data = api.readFile(api.lookUpFile(".csslintrc")),
             json;
         if (data) {
             if (data.charAt(0) === "{") {
