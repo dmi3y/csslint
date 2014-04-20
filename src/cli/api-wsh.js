@@ -5,9 +5,9 @@
 //TODO: This file needs major cleanup!!!
 
 /* jshint wsh:true */
-/* global cli */
+/* exported api */
 
-var wshapi = (function(){
+var api = (function(){
     var fso = new ActiveXObject("Scripting.FileSystemObject");
     var shell = WScript.CreateObject("WScript.Shell");
     var finalArgs = [], i, args = WScript.Arguments;
@@ -142,37 +142,6 @@ var wshapi = (function(){
             return fso.FolderExists(name);
         },
 
-        lookUpFile: function (filename, base) {
-            var lookupd = base? this.getFullPath(base): this.getWorkingDirectory(),
-                data,
-                self = this;
-
-            function isGoodToGoUp() {
-                var
-                    isUserhome = (lookupd == self.userhome),
-                    _lookupd = self.getFullPath(lookupd + "/../"),
-                    isTop = (lookupd == _lookupd),
-                    gtg;
-
-                gtg = (!data && !isUserhome && !isTop);
-                lookupd = _lookupd;
-                return gtg;
-            }
-
-            (function traverseUp() {
-                var
-                    fullpath = self.getFullPath(lookupd + "/" + filename);
-
-                data = self.readFile(fullpath);
-
-                if ( isGoodToGoUp() ) {
-                    traverseUp();
-                }
-            }());
-
-            return data;
-        },
-
         getFiles: function(dir){
             var files = [];
             traverseDir(files, dir);
@@ -206,5 +175,3 @@ var wshapi = (function(){
     };
 
 }());
-
-cli(wshapi);

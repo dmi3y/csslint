@@ -14,11 +14,11 @@ function include(path, sandbox) {
 (function(){
     var Assert = YUITest.Assert,
         sandbox = {
-            cli: function() {/*dummy cli to run from node.js api*/},
+            CSSLint: CSSLint,
             require: function(req) {
                 // monkey patched require
                 if (req === "./lib/csslint-node") {
-                    return {CSSLint: null};
+                    return {CSSLint: sandbox.CSSLint};
                 }
                 return require(req);
             },
@@ -29,9 +29,10 @@ function include(path, sandbox) {
         ncwd,
         userhomeBackup;
 
-    include(__dirname + "/src/cli/node.js", sandbox); /* expose sandbox.api */
+    include(__dirname + "/src/cli/api-node.js", sandbox); /* expose sandbox.api */
+    include(__dirname + "/src/cli/api-common.js", sandbox); /* expose sandbox.commonApi */
 
-    userhomeBackup = sandbox.api.userhome; // have no good idea hot to test if it was resolved or not
+    userhomeBackup = sandbox.api.userhome; // have no good idea how to test if it was resolved or not
 
     YUITest.TestRunner.add(new YUITest.TestCase({
         name: "Node api helper",

@@ -76,8 +76,9 @@ module.exports = function(grunt) {
             rhino: {
                 src: [
                     "<%= concat.core.dest %>",
-                    "src/cli/common.js",
-                    "src/cli/rhino.js"
+                    "src/cli/cli.js",
+                    "src/cli/api-rhino.js",
+                    "src/cli/api-common.js"
                 ],
                 dest: "<%= build_dir %>/<%= pkg.name %>-rhino.js"
             },
@@ -97,8 +98,9 @@ module.exports = function(grunt) {
                     banner: "#!/usr/bin/env node\n<%= banner.full %>"
                 },
                 src: [
-                    "src/cli/common.js",
-                    "src/cli/node.js"
+                    "src/cli/cli.js",
+                    "src/cli/api-node.js",
+                    "src/cli/api-common.js"
                 ],
                 dest: "<%= build_dir %>/npm/cli.js"
             },
@@ -124,8 +126,9 @@ module.exports = function(grunt) {
             wsh: {
                 src: [
                     "<%= concat.core.dest %>",
-                    "src/cli/common.js",
-                    "src/cli/wsh.js"
+                    "src/cli/cli.js",
+                    "src/cli/api-wsh.js",
+                    "src/cli/api-common.js"
                 ],
                 dest: "<%= build_dir %>/<%= pkg.name %>-wsh.js"
             }
