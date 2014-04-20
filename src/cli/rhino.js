@@ -7,14 +7,46 @@
 
 importPackage(java.io);
 
-cli({
+var api = {
     args: Array.prototype.concat.call(arguments),
     print: print,
     quit: quit,
+    userhome: java.lang.System.getProperty("user.home"),
 
     isDirectory: function(name){
         var dir = new File(name);
         return dir.isDirectory();
+    },
+
+    lookUpFile: function (filename, base) {
+        var lookupd = base? this.getFullPath(base): this.getWorkingDirectory(),
+            data,
+            self = this;
+
+        function isGoodToGoUp() {
+            var
+                isUserhome = (lookupd == self.userhome),
+                _lookupd = self.getFullPath(lookupd + "/../"),
+                isTop = (lookupd == _lookupd),
+                gtg;
+
+            gtg = (!data && !isUserhome && !isTop);
+            lookupd = _lookupd;
+            return gtg;
+        }
+
+        (function traverseUp() {
+            var
+                fullpath = self.getFullPath(lookupd + "/" + filename);
+
+            data = self.readFile(fullpath);
+
+            if ( isGoodToGoUp() ) {
+                traverseUp();
+            }
+        }());
+
+        return data;
     },
 
     getFiles: function(dir){
@@ -51,4 +83,6 @@ cli({
             return "";
         }
     }
-});
+};
+
+cli(api);

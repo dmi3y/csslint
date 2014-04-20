@@ -53,23 +53,35 @@ function include(path, sandbox) {
         },
 
         "look up file at the same directory": function() {
-            var result = sandbox.api.lookUpFile(".rc0");
-            Assert.areEqual(path.resolve(ncwd + "/.rc0"), result);
+            var result = sandbox.api.lookUpFile(".rc0").trim();
+            Assert.areEqual(".rc0 context", result);
         },
         "look up file from the parent directory": function() {
-            var result = sandbox.api.lookUpFile(".rc1");
-            Assert.areEqual(path.resolve(ncwd + "/../.rc1"), result);
-        },
-        "nonexisting file lookup should return null": function() {
-            var result = sandbox.api.lookUpFile("_nonexisting_filename_just_for_dummy_testings_.dnx");
-            Assert.areEqual(null, result);
+            var result = sandbox.api.lookUpFile(".rc1").trim();
+            Assert.areEqual(".rc1 context", result);
         },
         "userhome file lookup": function() {
-            var result = sandbox.api.lookUpFile(".rc2");
-            Assert.areEqual(path.join(sandbox.api.userhome, ".rc2"), result);
+            var result = sandbox.api.lookUpFile(".rc2").trim();
+            Assert.areEqual(".rc2 context", result);
+        },
+        "look up file from outside cwd scope (base argument)": function() {
+            var result = sandbox.api.lookUpFile(".in0", "dir0").trim();
+            Assert.areEqual(".in0 context", result);
+        },
+        "look up file from outside cwd scope base deeper level": function() {
+            var result = sandbox.api.lookUpFile(".in0", "dir0/dir1").trim();
+            Assert.areEqual(".in0 context", result);
+        },
+        "look up file from outside cwd scope base deeper level, same dir": function() {
+            var result = sandbox.api.lookUpFile(".in1", "dir0/dir1").trim();
+            Assert.areEqual(".in1 context", result);
+        },
+        "nonexisting file lookup should return empty string": function() {
+            var result = sandbox.api.lookUpFile("._nonexisting_filename_.");
+            Assert.areEqual("", result);
         },
         "top root file lookup": function() {
-            var result = sandbox.api.lookUpFile("");
+            var result = sandbox.api.lookUpFile("").trim();
             Assert.areEqual(null, result);
         }
 

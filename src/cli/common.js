@@ -8,16 +8,17 @@
 function cli(api){
 
     var globalOptions = {
-        "help"        : { "format" : "",                       "description" : "Displays this information."},
-        "format"      : { "format" : "<format>",               "description" : "Indicate which format to use for output."},
-        "list-rules"  : { "format" : "",                       "description" : "Outputs all of the rules available."},
-        "quiet"       : { "format" : "",                       "description" : "Only output when errors are present."},
-        "errors"      : { "format" : "<rule[,rule]+>",         "description" : "Indicate which rules to include as errors."},
-        "warnings"    : { "format" : "<rule[,rule]+>",         "description" : "Indicate which rules to include as warnings."},
-        "ignore"      : { "format" : "<rule[,rule]+>",         "description" : "Indicate which rules to ignore completely."},
-        "exclude-list": { "format" : "<file|dir[,file|dir]+>", "description" : "Indicate which files/directories to exclude from being linted."},
-        "version"     : { "format" : "",                       "description" : "Outputs the current version number."}
-    };
+            "help"        : { "format" : "",                       "description" : "Displays this information."},
+            "format"      : { "format" : "<format>",               "description" : "Indicate which format to use for output."},
+            "list-rules"  : { "format" : "",                       "description" : "Outputs all of the rules available."},
+            "quiet"       : { "format" : "",                       "description" : "Only output when errors are present."},
+            "errors"      : { "format" : "<rule[,rule]+>",         "description" : "Indicate which rules to include as errors."},
+            "warnings"    : { "format" : "<rule[,rule]+>",         "description" : "Indicate which rules to include as warnings."},
+            "ignore"      : { "format" : "<rule[,rule]+>",         "description" : "Indicate which rules to ignore completely."},
+            "exclude-list": { "format" : "<file|dir[,file|dir]+>", "description" : "Indicate which files/directories to exclude from being linted."},
+            "version"     : { "format" : "",                       "description" : "Outputs the current version number."}
+        },
+        industialOptions = ["files", "base"];
 
     //-------------------------------------------------------------------------
     // Helper functions
@@ -254,7 +255,8 @@ function cli(api){
         var arg = args.shift(),
             argName,
             parts,
-            files = [];
+            files = [],
+            base = [];
 
         while(arg){
             if (arg.indexOf("--") === 0){
@@ -268,24 +270,26 @@ function cli(api){
                 }
 
             } else {
-
+                base = arg.split(/(?=\\|\/)/);// split path by directory separators
                 //see if it's a directory or a file
                 if (api.isDirectory(arg)){
                     files = files.concat(api.getFiles(arg));
                 } else {
                     files.push(arg);
+                    /*filename=*/
+                    base.pop();// extract filename
                 }
             }
             arg = args.shift();
         }
-
+        options.base = base.join("");
         options.files = files;
         return options;
     }
 
     function validateOptions(options) {
         for (var optionKey in options) {
-            if (!globalOptions.hasOwnProperty(optionKey) && optionKey !== "files") {
+            if (!globalOptions.hasOwnProperty(optionKey) && industialOptions.indexOf(optionKey) === -1) {
                 api.print(optionKey + " is not a valid option. Exiting...");
                 outputHelp();
                 api.quit(0);
@@ -294,8 +298,9 @@ function cli(api){
     }
 
     function readConfigFile(options) {
-        var data = api.readFile(api.lookUpFile(".csslintrc")),
+        var data = api.lookUpFile(".csslintrc", options.base),
             json;
+
         if (data) {
             if (data.charAt(0) === "{") {
                 try {
@@ -320,33 +325,45 @@ function cli(api){
     // Process command line
     //-----------------------------------------------------------------------------
 
-    var args     = api.args,
+    var args = api.args,
         argCount = args.length,
-        options  = {};
+        options = {},
+        rcOptions = {},
+        cliOptions = {},
+        mix = CSSLint.Util.mix;
 
-    // first look for config file .csslintrc
-    options = readConfigFile(options);
+    // Preprocess command line arguments
+    /*cliOptions = */
+    mix(cliOptions, processArguments(args, options));
 
-    // Command line arguments override config file
-    options = processArguments(args, options);
-
-    if (options.help || argCount === 0){
+    if (cliOptions.help || argCount === 0){
         outputHelp();
         api.quit(0);
     }
 
-    // Validate options
-    validateOptions(options);
-
-    if (options.version){
+    if (cliOptions.version){
         api.print("v" + CSSLint.version);
         api.quit(0);
     }
 
-    if (options["list-rules"]){
+    if (cliOptions["list-rules"]){
         printRules();
         api.quit(0);
     }
+
+    // Look for config file
+    /*rcOptions = */
+    mix(rcOptions, readConfigFile(options));
+
+    // Command line arguments override config file
+    /*options = */
+    mix(rcOptions, cliOptions);
+    // hot fix for CSSLint.Util.mix current behavior
+    // https://github.com/CSSLint/csslint/issues/501
+    options = rcOptions;
+
+    // Validate options
+    validateOptions(options);
 
     api.quit(processFiles(options.files,options));
 }

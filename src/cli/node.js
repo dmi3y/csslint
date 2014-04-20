@@ -13,7 +13,6 @@ var fs = require("fs"),
 
 api = {
     args: process.argv.slice(2),
-    userhome:  path.resolve(process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE),
 
     print: function(message) {
         fs.writeSync(1, message + "\n");
@@ -23,6 +22,9 @@ api = {
         process.exit(code || 0);
     },
 
+    userhome: path.resolve(process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE),
+
+
     isDirectory: function(name) {
         try {
             return fs.statSync(name).isDirectory();
@@ -31,34 +33,35 @@ api = {
         }
     },
 
-    lookUpFile: function (filename) {
-        var lookupd = process.cwd(),
-            isFile,
-            fullpath;
+    lookUpFile: function (filename, base) {
+        var lookupd = base? this.getFullPath(base): this.getWorkingDirectory(),
+            data,
+            self = this;
 
         function isGoodToGoUp() {
             var
-            isUserhome = (lookupd === this.userhome),
-                _lookupd = path.resolve(lookupd + "/../"),
-                isTop = (lookupd === _lookupd),
+                isUserhome = (lookupd == self.userhome),
+                _lookupd = self.getFullPath(lookupd + "/../"),
+                isTop = (lookupd == _lookupd),
                 gtg;
 
-            isFile = (fs.existsSync(fullpath) && fs.statSync(fullpath).isFile());
-            gtg = (!isFile && !isUserhome && !isTop);
+            gtg = (!data && !isUserhome && !isTop);
             lookupd = _lookupd;
             return gtg;
         }
 
         (function traverseUp() {
+            var
+                fullpath = self.getFullPath(lookupd + "/" + filename);
 
-            fullpath = path.resolve(lookupd, filename);
+            data = self.readFile(fullpath);
 
-            if (isGoodToGoUp()) {
+            if ( isGoodToGoUp() ) {
                 traverseUp();
             }
         }());
 
-        return isFile ? fullpath : null;
+        return data;
     },
 
     getFiles: function(dir) {
