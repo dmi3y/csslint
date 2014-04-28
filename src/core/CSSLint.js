@@ -20,13 +20,13 @@ var CSSLint = (function(){
             "errors": 2
         },
         valueMap = {
-            "true": optionsMap.errors,  // true is error
-            "": optionsMap.warnings,    // blank is warning
             "false": optionsMap.ignore, // false is ignore
+            "": optionsMap.warnings,    // blank is warning
+            "true": optionsMap.errors,  // true is error
 
-            "2": optionsMap.errors,     // explicit error
-            "1": optionsMap.warnings,   // explicit warning
-            "0": optionsMap.ignore      // explicit ignore
+            "0": optionsMap.ignore,    // explicit ignore
+            "1": optionsMap.warnings,  // explicit warning
+            "2": optionsMap.errors     // explicit error
         };
 
     api.version = "@VERSION@";
@@ -97,7 +97,7 @@ var CSSLint = (function(){
                 optionValues = (splitrc.length === 2)? splitrc[1].split(","): true;
             } else {
                 optionName = "files";
-                optionValues = [splitrc[0]];
+                optionValues = splitrc[0];
             }
 
             out[optionName] = optionValues;

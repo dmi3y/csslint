@@ -163,7 +163,7 @@ function cli(api){
      * @return {Number} exit code
      */
     function processFiles(options){
-        var fileArray = options.files,
+        var fileArray = api.isDirectory(options.files)? api.getFiles(options.files): [options.files],
             exitCode = 0,
             formatId = options.format || "text",
             formatter,
@@ -270,8 +270,9 @@ function cli(api){
     // Validate options
     validateOptions(options);
 
-    rulesetscust = CSSLint.optionsAsExplicitRulesets(options, "only from valid options");
+    rulesetscust = CSSLint.optionsAsExplicitRulesets(options, "filter valid options");
     rulesetsdef = CSSLint.getRuleset();
+
     /*options.rulesets = */
     CSSLint.Util.mix(rulesetsdef, rulesetscust);
     options.rulesets = rulesetsdef;
