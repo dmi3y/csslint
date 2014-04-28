@@ -30,6 +30,7 @@ var CSSLint = (function(){
         };
 
     api.version = "@VERSION@";
+    api.defaultThreshold = optionsMap.warnings;
 
     //-------------------------------------------------------------------------
     // Options helpers
@@ -40,7 +41,7 @@ var CSSLint = (function(){
      * @param obj {object} - object to be normilized
      * @return {object} - normilized object
      */
-    api.optionsAsExplicitRulesets = function(obj) {
+    api.optionsAsExplicitRulesets = function(obj, filter) {
         var
             out = {},
             objix,
@@ -48,9 +49,10 @@ var CSSLint = (function(){
             objitsLen,
             option,
             val,
-            i;
+            i,
+            loop = filter? optionsMap: obj;
 
-        for (objix in obj) {
+        for (objix in loop) {
             if ( obj.hasOwnProperty(objix) ) {
                 objits = obj[objix];
 
@@ -67,6 +69,7 @@ var CSSLint = (function(){
                     option = objix;
                     val = valueMap[objits.toString()];
                     out[option] = val;
+                    // additional validation?
                 }
             }
 
@@ -175,7 +178,7 @@ var CSSLint = (function(){
             len = rules.length;
 
         while (i < len){
-            ruleset[rules[i++].id] = 1;    //by default, everything is a warning
+            ruleset[rules[i++].id] = api.defaultThreshold; //by default, everything is a warning
         }
 
         return ruleset;

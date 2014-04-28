@@ -237,7 +237,9 @@ function cli(api){
         argCount = args.length,
         options,
         optionsrc,
-        optionscli;
+        optionscli,
+        rulesetscust,
+        rulesetsdef;
 
 
     optionscli = processArguments(args);
@@ -267,6 +269,12 @@ function cli(api){
 
     // Validate options
     validateOptions(options);
-    options.rulesets = CSSLint.optionsAsExplicitRulesets(options);
+
+    rulesetscust = CSSLint.optionsAsExplicitRulesets(options, "only from valid options");
+    rulesetsdef = CSSLint.getRuleset();
+    /*options.rulesets = */
+    CSSLint.Util.mix(rulesetsdef, rulesetscust);
+    options.rulesets = rulesetsdef;
+
     api.quit(processFiles(options));
 }
