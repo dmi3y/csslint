@@ -36,52 +36,6 @@ function cli(api){
     }
 
     /**
-     * Returns a ruleset object based on the CLI options.
-     * @param options {Object} The CLI options.
-     * @return {Object} A ruleset object.
-     */
-    function gatherRules(options, ruleset){
-        var warnings = options.rules || options.warnings,
-            errors = options.errors;
-
-        if (warnings){
-            ruleset = ruleset || {};
-            warnings.split(",").forEach(function(value){
-                ruleset[value] = 1;
-            });
-        }
-
-        if (errors){
-            ruleset = ruleset || {};
-            errors.split(",").forEach(function(value){
-                ruleset[value] = 2;
-            });
-        }
-
-        return ruleset;
-    }
-
-    /**
-     * Filters out rules using the ignore command line option.
-     * @param options {Object} the CLI options
-     * @return {Object} A ruleset object.
-     */
-    function filterRules(options) {
-        var ignore = options.ignore,
-            ruleset = null;
-
-        if (ignore) {
-            ruleset = CSSLint.getRuleset();
-            ignore.split(",").forEach(function(value){
-                ruleset[value] = 0;
-            });
-        }
-
-        return ruleset;
-    }
-
-
-    /**
      * Filters out files using the exclude-list command line option.
      * @param files   {Array}  the list of files to check for exclusions
      * @param options {Object} the CLI options
@@ -136,8 +90,7 @@ function cli(api){
      */
     function processFile(relativeFilePath, options) {
         var input = api.readFile(relativeFilePath),
-            ruleset = filterRules(options),
-            result = CSSLint.verify(input, gatherRules(options, ruleset)),
+            result = CSSLint.verify(input, options.rulesets),
             formatter = CSSLint.getFormatter(options.format || "text"),
             messages = result.messages || [],
             output,
@@ -209,8 +162,9 @@ function cli(api){
      * @param options {Object} options object
      * @return {Number} exit code
      */
-    function processFiles(fileArray, options){
-        var exitCode = 0,
+    function processFiles(options){
+        var fileArray = options.files,
+            exitCode = 0,
             formatId = options.format || "text",
             formatter,
             files = filterFiles(fileArray,options),
@@ -234,9 +188,9 @@ function cli(api){
 
                 files.forEach(function(file){
                     if (exitCode === 0) {
-                        exitCode = processFile(file,options);
+                        exitCode = processFile(file, options);
                     } else {
-                        processFile(file,options);
+                        processFile(file, options);
                     }
                 });
 
@@ -250,37 +204,8 @@ function cli(api){
     }
 
 
-    function processArguments(args, options) {
-        var arg = args.shift(),
-            argName,
-            parts,
-            files = [];
-
-        while(arg){
-            if (arg.indexOf("--") === 0){
-                argName = arg.substring(2);
-
-                if (argName.indexOf("=") > -1){
-                    parts = argName.split("=");
-                    options[parts[0]] = parts[1];
-                } else {
-                    options[argName] = true;
-                }
-
-            } else {
-
-                //see if it's a directory or a file
-                if (api.isDirectory(arg)){
-                    files = files.concat(api.getFiles(arg));
-                } else {
-                    files.push(arg);
-                }
-            }
-            arg = args.shift();
-        }
-
-        options.files = files;
-        return options;
+    function processArguments(args) {
+        return CSSLint.optionsCliParse(args);
     }
 
     function validateOptions(options) {
@@ -293,25 +218,13 @@ function cli(api){
         }
     }
 
-    function readConfigFile(options) {
-        var data = api.readFile(api.getFullPath(".csslintrc")),
-            json;
-        if (data) {
-            if (data.charAt(0) === "{") {
-                try {
-                    json = JSON.parse(data);
-                    data = "";
-                    for (var optionName in json) {
-                        if (json.hasOwnProperty(optionName)) {
-                            data += "--" + optionName + "=" + json[optionName].join();
-                        }
-                    }
-                } catch(e) {}
-            }
-            options = processArguments(data.split(/[\s\n\r]+/m), options);
-        }
+    function readConfigFile() {
+        var optionsStr = api.readFile(api.getFullPath(".csslintrc")),
+            out;
 
-        return options;
+        out = CSSLint.optionsParse(optionsStr);
+
+        return out;
     }
 
 
@@ -320,33 +233,40 @@ function cli(api){
     // Process command line
     //-----------------------------------------------------------------------------
 
-    var args     = api.args,
+    var args     = api.args.join(" "),
         argCount = args.length,
-        options  = {};
+        options,
+        optionsrc,
+        optionscli;
 
-    // first look for config file .csslintrc
-    options = readConfigFile(options);
 
-    // Command line arguments override config file
-    options = processArguments(args, options);
+    optionscli = processArguments(args);
 
-    if (options.help || argCount === 0){
+    if (optionscli.help || argCount === 0){
         outputHelp();
         api.quit(0);
     }
 
-    // Validate options
-    validateOptions(options);
-
-    if (options.version){
+    if (optionscli.version){
         api.print("v" + CSSLint.version);
         api.quit(0);
     }
 
-    if (options["list-rules"]){
+    if (optionscli["list-rules"]){
         printRules();
         api.quit(0);
     }
 
-    api.quit(processFiles(options.files,options));
+    // first look for config file .csslintrc
+    optionsrc = readConfigFile();
+
+    // Command line arguments override config file
+    /*options = */
+    CSSLint.Util.mix(optionsrc, optionscli);
+    options = optionsrc;
+
+    // Validate options
+    validateOptions(options);
+    options.rulesets = CSSLint.optionsAsExplicitRulesets(options);
+    api.quit(processFiles(options));
 }

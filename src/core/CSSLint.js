@@ -14,18 +14,19 @@ var CSSLint = (function(){
         formatters      = [],
         embeddedRuleset = /\/\*csslint([^\*]*)\*\//,
         api             = new parserlib.util.EventTarget(),
-        optionsValueMap = {
+        optionsMap = {
             "ignore": 0,
             "warnings": 1,
-            "errors": 2,
+            "errors": 2
+        },
+        valueMap = {
+            "true": optionsMap.errors,  // true is error
+            "": optionsMap.warnings,    // blank is warning
+            "false": optionsMap.ignore, // false is ignore
 
-            "true": optionsValueMap.errors,  // true is error
-            "": optionsValueMap.warnings,    // blank is warning
-            "false": optionsValueMap.ignore, // false is ignore
-
-            "2": optionsValueMap.errors,     // explicit error
-            "1": optionsValueMap.warnings,   // explicit warning
-            "0": optionsValueMap.ignore      // explicit ignore
+            "2": optionsMap.errors,     // explicit error
+            "1": optionsMap.warnings,   // explicit warning
+            "0": optionsMap.ignore      // explicit ignore
         };
 
     api.version = "@VERSION@";
@@ -39,7 +40,7 @@ var CSSLint = (function(){
      * @param obj {object} - object to be normilized
      * @return {object} - normilized object
      */
-    function normalizeAsExplicitRulesets(obj) {
+    api.optionsAsExplicitRulesets = function(obj) {
         var
             out = {},
             objix,
@@ -58,13 +59,13 @@ var CSSLint = (function(){
 
                     for(i=0; i<objitsLen; i+=1) {
                         option = objits[i];
-                        val = optionsValueMap[objix];
+                        val = optionsMap[objix];
                         out[option] = val;
                     }
 
                 } else {
                     option = objix;
-                    val = optionsValueMap[objits.toString()];
+                    val = valueMap[objits.toString()];
                     out[option] = val;
                 }
             }
@@ -72,11 +73,40 @@ var CSSLint = (function(){
         }
 
         return out;
-    }
+    };
+
+
+    api.optionsCliParse = function(rc) {
+        var
+            splitrcs = rc.split(/[\s\r\n]/),
+            splitrcsLen = splitrcs.length,
+            splitrc,
+            optionName,
+            optionValues,
+            i,
+            out = {};
+
+        for (i=0; i<splitrcsLen; i+=1) {
+            splitrc = splitrcs[i].split("=");
+
+            if ( splitrc[0].indexOf("--") === 0 ) {
+                optionName = splitrc[0].substring(2);
+                optionValues = (splitrc.length === 2)? splitrc[1].split(","): true;
+            } else {
+                optionName = "files";
+                optionValues = [splitrc[0]];
+            }
+
+            out[optionName] = optionValues;
+        }
+
+        return out;
+    };
 
     /**
      * Parse provided sting of options down to the explicit embedded rulesset format it is same for verify method.
-     * @param {string} string of options.
+     * @param str {string}     string of options.
+     *
      *    Could be:
      *      1. Original string CLI inspired format: --errors=id,imports --warnings=important --ignore=box-model
      *      2. Json string representation of that format: {"errors": ["id","imports"], "warnings"  :["important"], "ignore":["box-model"]}
@@ -84,79 +114,20 @@ var CSSLint = (function(){
      *      4. Explicit json sting of embedded rulesets: {"id": 2, "imports": 2, "important": 1, "box-model": 0}
      *
      * @method parseOptions
-     * @return {object} explicit json of embedded rulesets
+     * @return {object} any of 2. - 4. json representations depending on input, 1. parsed down to 2.
      */
-    api.parseOptions = function(str){
+    api.optionsParse = function(str){
 
         var
-            rc,
-            jsonout = {};
+            jsonout;
 
-        function guessType(str) {
-            var type;
-
-            try {
-                rc = JSON.parse(str);
-                type = "json";
-            } catch (e) {
-                rc = str;
-                type = "text";
-            }
-
-            return type;
-
+        try {
+            jsonout = JSON.parse(str);
+        } catch (e) {
+            jsonout = api.optionsCliParse(str);
         }
 
-        function readOptionsAsText() {
-            var
-                splitrcs = rc.split(/[\s\r\n]/),
-                splitrcsLen = splitrcs.length,
-                splitrc,
-                optionName,
-                optionValues,
-                optionValuesLen,
-                optionsOut,
-                i,
-                j,
-                out = {};
-
-            for (i=0; i<splitrcsLen; i+=1) {
-                splitrc = splitrcs[i]/*.trim()*/.split("=");
-                if (splitrc.length < 2) {
-                    continue;
-                }
-                optionName = splitrc[0].substring(2);
-                optionValues = splitrc[1].split(",");
-                optionValuesLen = optionValues.length;
-                optionsOut = [];
-
-                for(j=0; j<optionValuesLen; j += 1) {
-                    optionsOut.push(optionValues[j]);
-                }
-
-                out[optionName] = optionsOut;
-
-            }
-
-            return out;
-        }
-
-        function readOptionsAsJson() {
-            return rc;
-        }
-
-
-
-        switch( guessType(str) ){
-        case "text":
-            jsonout = readOptionsAsText();
-            break;
-        case "json":
-            jsonout = readOptionsAsJson();
-            break;
-        }
-
-        return normalizeAsExplicitRulesets(jsonout);
+        return jsonout;
 
     };
 
@@ -223,13 +194,12 @@ var CSSLint = (function(){
 
         if (rules) {
 
-
             rules.toLowerCase().split(",").forEach(function(rule){
                 var pair = rule.split(":"),
                     property = pair[0] || "",
                     value = pair[1] || "";
 
-                ruleset[property.trim()] = optionsValueMap[value.trim()];
+                ruleset[property.trim()] = valueMap[value.trim()];
             });
         }
 
