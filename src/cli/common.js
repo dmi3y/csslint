@@ -222,7 +222,7 @@ function cli(api){
         var optionsStr = api.readFile(api.getFullPath(".csslintrc")),
             out;
 
-        out = CSSLint.optionsParse(optionsStr);
+        out = CSSLint.optionsParse(optionsStr, "preserve format");
 
         return out;
     }
@@ -241,6 +241,7 @@ function cli(api){
         rulesetscust,
         rulesetsdef;
 
+    JSON.parse("{\"a\":\"b\"}");
 
     optionscli = processArguments(args);
 
@@ -270,7 +271,7 @@ function cli(api){
     // Validate options
     validateOptions(options);
 
-    rulesetscust = CSSLint.optionsAsExplicitRulesets(options, "filter valid options");
+    rulesetscust = CSSLint.optionsAsExplicitRulesets(options, "filter map options");
     rulesetsdef = CSSLint.getRuleset();
 
     /*options.rulesets = */

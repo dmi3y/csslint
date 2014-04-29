@@ -39,6 +39,7 @@ var CSSLint = (function(){
     /**
      * Normalizing provided options object to explicit rulesets object
      * @param obj {object} - object to be normilized
+     * @param filter {boolean} - only get options from map hash
      * @return {object} - normilized object
      */
     api.optionsAsExplicitRulesets = function(obj, filter) {
@@ -78,7 +79,11 @@ var CSSLint = (function(){
         return out;
     };
 
-
+    /**
+     * parse CLI options to json
+     * @param rc {string} cli formatted options, original .csslintrc or joined cli arguments
+     * @return out {object} json representation for cli options
+     */
     api.optionsCliParse = function(rc) {
         var
             splitrcs = rc.split(/[\s\r\n]/),
@@ -108,8 +113,8 @@ var CSSLint = (function(){
 
     /**
      * Parse provided sting of options down to the explicit embedded rulesset format it is same for verify method.
-     * @param str {string}     string of options.
-     *
+     * @param str {string}        string of options.
+     * @param partial {boolean}   flag to stop final object transaction to explicit rulesets
      *    Could be:
      *      1. Original string CLI inspired format: --errors=id,imports --warnings=important --ignore=box-model
      *      2. Json string representation of that format: {"errors": ["id","imports"], "warnings"  :["important"], "ignore":["box-model"]}
@@ -117,9 +122,9 @@ var CSSLint = (function(){
      *      4. Explicit json sting of embedded rulesets: {"id": 2, "imports": 2, "important": 1, "box-model": 0}
      *
      * @method parseOptions
-     * @return {object} any of 2. - 4. json representations depending on input, 1. parsed down to 2.
+     * @return {object} 4. json representation, if partial flag on than any of 2. - 4. depending on input, 1. parsed to 2.
      */
-    api.optionsParse = function(str){
+    api.optionsParse = function(str, partial){
 
         var
             jsonout;
@@ -130,7 +135,7 @@ var CSSLint = (function(){
             jsonout = api.optionsCliParse(str);
         }
 
-        return jsonout;
+        return partial? jsonout: api.optionsAsExplicitRulesets(jsonout);
 
     };
 
