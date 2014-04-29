@@ -7,7 +7,7 @@
 
 function cli(api){
 
-    var globalOptions = {
+    var cliOptions = {
             "help"        : { "format" : "",                       "description" : "Displays this information."},
             "format"      : { "format" : "<format>",               "description" : "Indicate which format to use for output."},
             "list-rules"  : { "format" : "",                       "description" : "Outputs all of the rules available."},
@@ -18,7 +18,7 @@ function cli(api){
             "exclude-list": { "format" : "<file|dir[,file|dir]+>", "description" : "Indicate which files/directories to exclude from being linted."},
             "version"     : { "format" : "",                       "description" : "Outputs the current version number."}
         },
-        industialOptions = ["files", "base"];
+        helperOptions = ["files", "base"];
 
     //-------------------------------------------------------------------------
     // Helper functions
@@ -183,12 +183,12 @@ function cli(api){
             "Global Options"
         ].join("\n"));
 
-        for (var optionName in globalOptions) {
-            if (globalOptions.hasOwnProperty(optionName)) {
+        for (var optionName in cliOptions) {
+            if (cliOptions.hasOwnProperty(optionName)) {
                 // Print the option name and the format if present
                 toPrint += "  --" + optionName;
-                if (globalOptions[optionName].format !== "") {
-                    formatString = "=" + globalOptions[optionName].format;
+                if (cliOptions[optionName].format !== "") {
+                    formatString = "=" + cliOptions[optionName].format;
                     toPrint += formatString;
                 } else {
                     formatString = "";
@@ -198,7 +198,7 @@ function cli(api){
                 toPrint += new Array(lenToPad - (optionName.length + formatString.length)).join(" ");
 
                 // Print the description
-                toPrint += globalOptions[optionName].description + "\n";
+                toPrint += cliOptions[optionName].description + "\n";
             }
         }
         api.print(toPrint);
@@ -289,7 +289,7 @@ function cli(api){
 
     function validateOptions(options) {
         for (var optionKey in options) {
-            if (!globalOptions.hasOwnProperty(optionKey) && industialOptions.indexOf(optionKey) === -1) {
+            if (!cliOptions.hasOwnProperty(optionKey) && helperOptions.indexOf(optionKey) === -1) {
                 api.print(optionKey + " is not a valid option. Exiting...");
                 outputHelp();
                 api.quit(0);
@@ -328,39 +328,39 @@ function cli(api){
     var args = api.args,
         argCount = args.length,
         options = {},
-        rcOptions = {},
-        cliOptions = {},
+        optionsRc = {},
+        optionsCli = {},
         mix = CSSLint.Util.mix;
 
     // Preprocess command line arguments
-    /*cliOptions = */
-    mix(cliOptions, processArguments(args, options));
+    /*optionsCli = */
+    mix(optionsCli, processArguments(args, options));
 
-    if (cliOptions.help || argCount === 0){
+    if (optionsCli.help || argCount === 0){
         outputHelp();
         api.quit(0);
     }
 
-    if (cliOptions.version){
+    if (optionsCli.version){
         api.print("v" + CSSLint.version);
         api.quit(0);
     }
 
-    if (cliOptions["list-rules"]){
+    if (optionsCli["list-rules"]){
         printRules();
         api.quit(0);
     }
 
     // Look for config file
-    /*rcOptions = */
-    mix(rcOptions, readConfigFile(options));
+    /*optionsRc = */
+    mix(optionsRc, readConfigFile(options));
 
     // Command line arguments override config file
     /*options = */
-    mix(rcOptions, cliOptions);
+    mix(optionsRc, optionsCli);
     // hot fix for CSSLint.Util.mix current behavior
     // https://github.com/CSSLint/csslint/issues/501
-    options = rcOptions;
+    options = optionsRc;
 
     // Validate options
     validateOptions(options);
