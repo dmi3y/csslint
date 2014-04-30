@@ -38,9 +38,9 @@ var CSSLint = (function(){
 
     /**
      * Normalizing provided options object to explicit rulesets object
-     * @param obj {object} - object to be normilized
-     * @param filter {boolean} - only get options from map hash
-     * @return {object} - normilized object
+     * @param {object}         [obj]       object to be normilized
+     * @param {boolean|string} [filter]    only get options from map hash
+     * @return {object}                    normilized object
      */
     api.optionsAsExplicitRulesets = function(obj, filter) {
         var

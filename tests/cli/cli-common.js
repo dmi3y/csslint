@@ -55,8 +55,7 @@ function include(path, sandbox) {
                             out = outcome[i];
 
                             if ( typeof out === "string") {
-                                out = /^.*/.exec(out.trim());
-                                out = out[0];
+                                out = /^.*/.exec(out.trim())[0];
                             }
                             if ( exp !== out ) {
                                 Assert.fail("Expecting: " + exp + " Got: " + out);
