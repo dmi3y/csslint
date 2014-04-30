@@ -330,7 +330,8 @@ function cli(api){
         options = {},
         optionsRc = {},
         optionsCli = {},
-        mix = CSSLint.Util.mix;
+        mix = CSSLint.Util.mix,
+        exitCode;
 
     // Preprocess command line arguments
     /*optionsCli = */
@@ -365,5 +366,7 @@ function cli(api){
     // Validate options
     validateOptions(options);
 
-    api.quit(processFiles(options.files,options));
+    exitCode = processFiles(options.files,options);
+
+    api.quit(exitCode);
 }
